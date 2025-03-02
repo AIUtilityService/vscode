@@ -14,10 +14,30 @@ export class SchemaValidator {
 
   /**
    * Validate the schema in a document
+   *
+   * Missing apiVersion but present kind
+   * Present apiVersion but missing kind
+   * Incorrect apiVersion value
+   * Incorrect kind value
+   * Both fields present but in wrong order
+   * Empty document
    */
   public static validate(document: vscode.TextDocument): void {
     // Clear previous diagnostics
     this.diagnosticCollection.delete(document.uri);
+
+    // Handle empty document
+    if (document.lineCount === 0) {
+      const emptyRange = new vscode.Range(0, 0, 0, 0);
+      const diagnostics = [
+        DiagnosticUtils.createError(
+          "Empty document. Expected 'apiVersion: kro.run/v1alpha1' on the first line and 'kind: ResourceGraphDefinition' on the second line.",
+          emptyRange
+        ),
+      ];
+      this.diagnosticCollection.set(document.uri, diagnostics);
+      return;
+    }
 
     // Parse YAML
     const parsedYaml = YamlParser.parse(document);
@@ -25,200 +45,94 @@ export class SchemaValidator {
       return; // Invalid YAML, parsing errors will be shown by VS Code
     }
 
-    // Check if it's a ResourceGraphDefinition
-    if (!YamlParser.isResourceGraphDefinition(parsedYaml)) {
-      return; // Not a ResourceGraphDefinition, no validation needed
+    const diagnostics: vscode.Diagnostic[] = [];
+    let isValid = true;
+
+    // Check first line for apiVersion
+    const firstLine = document.lineAt(0);
+    const firstLineContent = firstLine.text.trim();
+    const hasApiVersion = firstLineContent.startsWith("apiVersion:");
+
+    if (!hasApiVersion) {
+      isValid = false;
+      diagnostics.push(
+        DiagnosticUtils.createError(
+          "First line must be 'apiVersion: kro.run/v1alpha1'.",
+          firstLine.range
+        )
+      );
+
+      // If apiVersion is missing, don't validate further
+      this.diagnosticCollection.set(document.uri, diagnostics);
+      return;
     }
 
-    const diagnostics: vscode.Diagnostic[] = [];
+    // Check apiVersion value
+    if (parsedYaml.apiVersion !== "kro.run/v1alpha1") {
+      isValid = false;
+      diagnostics.push(
+        DiagnosticUtils.createError(
+          "Invalid apiVersion. Expected 'kro.run/v1alpha1'.",
+          firstLine.range
+        )
+      );
+    }
 
-    // Validate schema types
-    this.validateSchemaTypes(parsedYaml, document, diagnostics);
+    // Check second line for kind
+    if (document.lineCount > 1) {
+      const secondLine = document.lineAt(1);
+      const secondLineContent = secondLine.text.trim();
+      const hasKind = secondLineContent.startsWith("kind:");
 
-    // Validate required fields
-    this.validateRequiredFields(parsedYaml, document, diagnostics);
+      if (!hasKind) {
+        isValid = false;
+        diagnostics.push(
+          DiagnosticUtils.createError(
+            "Second line must be 'kind: ResourceGraphDefinition'.",
+            secondLine.range
+          )
+        );
+
+        // If kind is missing, don't validate further
+        this.diagnosticCollection.set(document.uri, diagnostics);
+        return;
+      }
+
+      // Check kind value
+      if (parsedYaml.kind !== "ResourceGraphDefinition") {
+        isValid = false;
+        diagnostics.push(
+          DiagnosticUtils.createError(
+            "Invalid kind. Expected 'ResourceGraphDefinition'.",
+            secondLine.range
+          )
+        );
+      }
+    } else {
+      // Document has only one line (apiVersion), but missing kind
+      isValid = false;
+      diagnostics.push(
+        DiagnosticUtils.createError(
+          "Missing kind. Expected 'kind: ResourceGraphDefinition' on the second line.",
+          new vscode.Range(
+            new vscode.Position(0, firstLine.text.length),
+            new vscode.Position(0, firstLine.text.length)
+          )
+        )
+      );
+
+      // If kind is missing, don't validate further
+      this.diagnosticCollection.set(document.uri, diagnostics);
+      return;
+    }
+
+    // If not valid, set diagnostics and return
+    if (!isValid) {
+      this.diagnosticCollection.set(document.uri, diagnostics);
+      return;
+    }
 
     // Set diagnostics
     this.diagnosticCollection.set(document.uri, diagnostics);
-  }
-
-  /**
-   * Validate schema types in the ResourceGraphDefinition
-   */
-  private static validateSchemaTypes(
-    parsedYaml: any,
-    document: vscode.TextDocument,
-    diagnostics: vscode.Diagnostic[]
-  ): void {
-    if (
-      !parsedYaml.spec ||
-      !parsedYaml.spec.schema ||
-      !parsedYaml.spec.schema.spec
-    ) {
-      return; // No schema to validate
-    }
-
-    const schemaSpec = parsedYaml.spec.schema.spec;
-    this.validateObjectTypes(
-      schemaSpec,
-      ["spec", "schema", "spec"],
-      document,
-      diagnostics
-    );
-  }
-
-  /**
-   * Recursively validate object types
-   */
-  private static validateObjectTypes(
-    obj: any,
-    path: string[],
-    document: vscode.TextDocument,
-    diagnostics: vscode.Diagnostic[]
-  ): void {
-    if (!obj || typeof obj !== "object") {
-      return;
-    }
-
-    for (const key in obj) {
-      const value = obj[key];
-      const currentPath = [...path, key];
-
-      if (typeof value === "string" && this.isTypeDefinition(value)) {
-        // This is a type definition, validate it
-        const typeInfo = this.parseTypeDefinition(value);
-        if (!typeInfo.isValid) {
-          const range =
-            YamlParser.getPositionForPath(document, currentPath) ||
-            new vscode.Range(0, 0, 0, 0);
-
-          diagnostics.push(
-            DiagnosticUtils.createError(
-              `Invalid type definition: ${value}`,
-              range
-            )
-          );
-        }
-      } else if (typeof value === "object" && value !== null) {
-        // Recursively validate nested objects
-        this.validateObjectTypes(value, currentPath, document, diagnostics);
-      }
-    }
-  }
-
-  /**
-   * Validate required fields in the ResourceGraphDefinition
-   */
-  private static validateRequiredFields(
-    parsedYaml: any,
-    document: vscode.TextDocument,
-    diagnostics: vscode.Diagnostic[]
-  ): void {
-    if (
-      !parsedYaml.spec ||
-      !parsedYaml.spec.schema ||
-      !parsedYaml.spec.schema.spec
-    ) {
-      return; // No schema to validate
-    }
-
-    const schemaSpec = parsedYaml.spec.schema.spec;
-    this.findRequiredFields(
-      schemaSpec,
-      ["spec", "schema", "spec"],
-      document,
-      diagnostics
-    );
-  }
-
-  /**
-   * Find required fields in the schema
-   */
-  private static findRequiredFields(
-    obj: any,
-    path: string[],
-    document: vscode.TextDocument,
-    diagnostics: vscode.Diagnostic[]
-  ): void {
-    if (!obj || typeof obj !== "object") {
-      return;
-    }
-
-    for (const key in obj) {
-      const value = obj[key];
-      const currentPath = [...path, key];
-
-      if (typeof value === "string" && this.isTypeDefinition(value)) {
-        // Check if this field is required
-        const typeInfo = this.parseTypeDefinition(value);
-        if (typeInfo.isRequired) {
-          // Check if the field exists in the instance
-          // This would require parsing the instance data, which is beyond this example
-          // In a real implementation, you would check if required fields exist in the instance
-        }
-      } else if (typeof value === "object" && value !== null) {
-        // Recursively find required fields in nested objects
-        this.findRequiredFields(value, currentPath, document, diagnostics);
-      }
-    }
-  }
-
-  /**
-   * Check if a string is a type definition
-   */
-  private static isTypeDefinition(value: string): boolean {
-    return Object.values(TYPE_PATTERNS).some((pattern) => pattern.test(value));
-  }
-
-  /**
-   * Parse a type definition string
-   */
-  private static parseTypeDefinition(typeStr: string): TypeDefinition {
-    const result: TypeDefinition = {
-      baseType: "",
-      modifiers: {},
-      isValid: false,
-      isRequired: false,
-    };
-
-    // Split by pipe to separate type and modifiers
-    const parts = typeStr.split("|").map((p) => p.trim());
-
-    // First part is the base type
-    result.baseType = parts[0];
-
-    // Check if base type is valid
-    const isArrayType = TYPE_PATTERNS.array.test(result.baseType);
-    const isMapType = TYPE_PATTERNS.map.test(result.baseType);
-
-    result.isValid =
-      VALID_BASE_TYPES.includes(result.baseType) || isArrayType || isMapType;
-
-    // Parse modifiers
-    for (let i = 1; i < parts.length; i++) {
-      const modifierPart = parts[i];
-      const modifierMatch = modifierPart.match(/^(\w+)=(.*)$/);
-
-      if (modifierMatch) {
-        const [, modifierName, modifierValue] = modifierMatch;
-
-        // Check if modifier is valid
-        if (!VALID_MODIFIERS.includes(modifierName)) {
-          result.isValid = false;
-          return result;
-        }
-
-        result.modifiers[modifierName] = modifierValue;
-
-        if (modifierName === "required" && modifierValue === "true") {
-          result.isRequired = true;
-        }
-      } else {
-        result.isValid = false; // Invalid modifier format
-        return result;
-      }
-    }
-
-    return result;
   }
 }

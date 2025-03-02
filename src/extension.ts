@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { SchemaValidator } from "./validation/schemaValidator";
+import { SchemaFixProvider } from "./actions/schemaFix";
 
 /**
  * Activates the extension
@@ -20,6 +21,16 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(validateCommand);
+
+  // Register code action provider for YAML files
+  const codeActionProvider = vscode.languages.registerCodeActionsProvider(
+    { language: "yaml" },
+    new SchemaFixProvider(),
+    {
+      providedCodeActionKinds: SchemaFixProvider.providedCodeActionKinds,
+    }
+  );
+  context.subscriptions.push(codeActionProvider);
 
   // Create status bar item
   const statusBarItem = vscode.window.createStatusBarItem(

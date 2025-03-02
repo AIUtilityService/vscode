@@ -32,13 +32,18 @@ export class DiagnosticUtils {
    */
   public static createError(
     message: string,
-    range: vscode.Range
+    range: vscode.Range,
+    source?: string
   ): vscode.Diagnostic {
-    return new vscode.Diagnostic(
+    const diagnostic = new vscode.Diagnostic(
       range,
       message,
       vscode.DiagnosticSeverity.Error
     );
+    if (source) {
+      diagnostic.source = source;
+    }
+    return diagnostic;
   }
 
   /**
@@ -46,13 +51,18 @@ export class DiagnosticUtils {
    */
   public static createWarning(
     message: string,
-    range: vscode.Range
+    range: vscode.Range,
+    source?: string
   ): vscode.Diagnostic {
-    return new vscode.Diagnostic(
+    const diagnostic = new vscode.Diagnostic(
       range,
       message,
       vscode.DiagnosticSeverity.Warning
     );
+    if (source) {
+      diagnostic.source = source;
+    }
+    return diagnostic;
   }
 
   /**
@@ -60,13 +70,18 @@ export class DiagnosticUtils {
    */
   public static createInfo(
     message: string,
-    range: vscode.Range
+    range: vscode.Range,
+    source?: string
   ): vscode.Diagnostic {
-    return new vscode.Diagnostic(
+    const diagnostic = new vscode.Diagnostic(
       range,
       message,
       vscode.DiagnosticSeverity.Information
     );
+    if (source) {
+      diagnostic.source = source;
+    }
+    return diagnostic;
   }
 
   /**
@@ -74,13 +89,18 @@ export class DiagnosticUtils {
    */
   public static createHint(
     message: string,
-    range: vscode.Range
+    range: vscode.Range,
+    source?: string
   ): vscode.Diagnostic {
-    return new vscode.Diagnostic(
+    const diagnostic = new vscode.Diagnostic(
       range,
       message,
       vscode.DiagnosticSeverity.Hint
     );
+    if (source) {
+      diagnostic.source = source;
+    }
+    return diagnostic;
   }
 
   /**

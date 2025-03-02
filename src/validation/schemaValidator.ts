@@ -32,7 +32,8 @@ export class SchemaValidator {
       const diagnostics = [
         DiagnosticUtils.createError(
           "Empty document. Expected 'apiVersion: kro.run/v1alpha1' on the first line and 'kind: ResourceGraphDefinition' on the second line.",
-          emptyRange
+          emptyRange,
+          "kro-schema-validation"
         ),
       ];
       this.diagnosticCollection.set(document.uri, diagnostics);
@@ -58,7 +59,8 @@ export class SchemaValidator {
       diagnostics.push(
         DiagnosticUtils.createError(
           "First line must be 'apiVersion: kro.run/v1alpha1'.",
-          firstLine.range
+          firstLine.range,
+          "kro-schema-validation"
         )
       );
 
@@ -73,7 +75,8 @@ export class SchemaValidator {
       diagnostics.push(
         DiagnosticUtils.createError(
           "Invalid apiVersion. Expected 'kro.run/v1alpha1'.",
-          firstLine.range
+          firstLine.range,
+          "kro-schema-validation"
         )
       );
     }
@@ -89,7 +92,8 @@ export class SchemaValidator {
         diagnostics.push(
           DiagnosticUtils.createError(
             "Second line must be 'kind: ResourceGraphDefinition'.",
-            secondLine.range
+            secondLine.range,
+            "kro-schema-validation"
           )
         );
 
@@ -104,7 +108,8 @@ export class SchemaValidator {
         diagnostics.push(
           DiagnosticUtils.createError(
             "Invalid kind. Expected 'ResourceGraphDefinition'.",
-            secondLine.range
+            secondLine.range,
+            "kro-schema-validation"
           )
         );
       }
@@ -117,7 +122,8 @@ export class SchemaValidator {
           new vscode.Range(
             new vscode.Position(0, firstLine.text.length),
             new vscode.Position(0, firstLine.text.length)
-          )
+          ),
+          "kro-schema-validation"
         )
       );
 

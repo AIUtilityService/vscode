@@ -30,6 +30,7 @@ export interface Resource {
   id: string;
   type: string;
   properties?: Record<string, any>;
+  template?: Record<string, any>;
   [key: string]: any;
 }
 
@@ -46,7 +47,13 @@ export interface TypeDefinition {
 /**
  * Valid base types for schema fields
  */
-export const VALID_BASE_TYPES = ["string", "integer", "boolean", "number"];
+export const VALID_BASE_TYPES = [
+  "string",
+  "integer",
+  "boolean",
+  "number",
+  "object",
+];
 
 /**
  * Valid modifiers for schema fields
@@ -58,6 +65,13 @@ export const VALID_MODIFIERS = [
   "minimum",
   "maximum",
   "enum",
+  "format",
+  "pattern",
+  "minLength",
+  "maxLength",
+  "minItems",
+  "maxItems",
+  "uniqueItems",
 ];
 
 /**
@@ -68,6 +82,7 @@ export const TYPE_PATTERNS = {
   integer: /^integer(\s*\|\s*.+)?$/,
   boolean: /^boolean(\s*\|\s*.+)?$/,
   number: /^number(\s*\|\s*.+)?$/,
+  object: /^object(\s*\|\s*.+)?$/,
   array: /^\[\](.+)$/,
   map: /^map\[(.+)\](.+)$/,
 };

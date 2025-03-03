@@ -1,28 +1,24 @@
+// src/extension.ts
 import * as vscode from "vscode";
 import { SchemaValidator } from "./validation/schemaValidator";
 import { SchemaFixProvider } from "./actions/schemaFix";
 
-/**
- * Activates the extension
- */
-export function activate(context: vscode.ExtensionContext) {
-  console.log("Kro Schema Validator is now active");
+// Debounce timer for validation
+let validationTimer: NodeJS.Timeout | undefined;
 
-  // Register commands
+export function activate(context: vscode.ExtensionContext) {
   const validateCommand = vscode.commands.registerCommand(
     "kro-cde.validateSchema",
     () => {
       const editor = vscode.window.activeTextEditor;
       if (editor) {
         SchemaValidator.validate(editor.document);
-        vscode.window.showInformationMessage("Kro schema validation complete");
       }
     }
   );
-
   context.subscriptions.push(validateCommand);
 
-  // Register code action provider for YAML files
+  // Register the code action provider
   const codeActionProvider = vscode.languages.registerCodeActionsProvider(
     { language: "yaml" },
     new SchemaFixProvider(),
@@ -32,18 +28,18 @@ export function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(codeActionProvider);
 
-  // Create status bar item
+  // Create a status bar item
   const statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
     100
   );
-  statusBarItem.text = "$(check) Kro";
-  statusBarItem.tooltip = "Validate Kro ResourceGraphDefinition";
+  statusBarItem.text = "$(check) Kro Schema";
+  statusBarItem.tooltip = "Validate Kro Schema";
   statusBarItem.command = "kro-cde.validateSchema";
   statusBarItem.show();
   context.subscriptions.push(statusBarItem);
 
-  // Validate on document open and save
+  // Validate on document open
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument((document) => {
       if (document.languageId === "yaml") {
@@ -52,6 +48,7 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 
+  // Validate on document save
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument((document) => {
       if (document.languageId === "yaml") {
@@ -61,22 +58,23 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   // Validate on document change (with debounce)
-  let timeout: NodeJS.Timeout | undefined = undefined;
   context.subscriptions.push(
     vscode.workspace.onDidChangeTextDocument((event) => {
       if (event.document.languageId === "yaml") {
-        if (timeout) {
-          clearTimeout(timeout);
-          timeout = undefined;
+        // Clear existing timeout
+        if (validationTimer) {
+          clearTimeout(validationTimer);
         }
-        timeout = setTimeout(() => {
+
+        // Set new timeout
+        validationTimer = setTimeout(() => {
           SchemaValidator.validate(event.document);
         }, 500);
       }
     })
   );
 
-  // Validate all open YAML documents
+  // Validate all open documents
   vscode.workspace.textDocuments.forEach((document) => {
     if (document.languageId === "yaml") {
       SchemaValidator.validate(document);
@@ -84,9 +82,6 @@ export function activate(context: vscode.ExtensionContext) {
   });
 }
 
-/**
- * Deactivates the extension
- */
 export function deactivate() {
-  console.log("Kro Schema Validator is now deactivated");
+  console.log("Kro Schema Validator deactivated");
 }

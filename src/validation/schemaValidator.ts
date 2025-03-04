@@ -280,6 +280,12 @@ export class SchemaValidator {
         continue;
       }
 
+      // Check if it's a CEL expression - if so, skip validation
+      const isCEL = this.isCELExpression(fieldValue);
+      if (isCEL) {
+        continue; // Skip validation for CEL expressions
+      }
+
       // Parse and validate the type definition
       const typeDefinition = this.parseTypeDefinition(fieldValue);
 
@@ -354,6 +360,13 @@ export class SchemaValidator {
     }
   }
 
+  /**
+   * Check if a string is a CEL expression
+   */
+  private static isCELExpression(value: string): boolean {
+    // CEL expressions are typically enclosed in ${...}
+    return value.startsWith("${") && value.endsWith("}");
+  }
   /**
    * Validate resources section
    */

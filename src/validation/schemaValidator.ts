@@ -11,6 +11,7 @@ import {
   Resource,
 } from "../schema/model";
 import { DiagnosticUtils } from "../utils/diagonisticUtils";
+import { CELUtils } from "../utils/celUtils";
 
 export class SchemaValidator {
   private static readonly diagnosticCollection =
@@ -162,8 +163,14 @@ export class SchemaValidator {
     // Validate metadata
     this.validateMetadata(document, parsedYaml, diagnostics);
 
-    // Validate spec
-    this.validateSpec(document, parsedYaml, diagnostics);
+    if (parsedYaml.spec?.schema) {
+      this.validateSchema(document, parsedYaml.spec.schema, diagnostics);
+    }
+
+    // Validate resources section
+    if (parsedYaml.spec?.resources) {
+      this.validateResources(document, parsedYaml.spec.resources, diagnostics);
+    }
   }
 
   /**
@@ -281,9 +288,9 @@ export class SchemaValidator {
       }
 
       // Check if it's a CEL expression - if so, skip validation
-      const isCEL = this.isCELExpression(fieldValue);
-      if (isCEL) {
-        continue; // Skip validation for CEL expressions
+      if (CELUtils.isCELExpression(fieldValue)) {
+        // Use CELUtils here
+        continue;
       }
 
       // Parse and validate the type definition
@@ -361,13 +368,6 @@ export class SchemaValidator {
   }
 
   /**
-   * Check if a string is a CEL expression
-   */
-  private static isCELExpression(value: string): boolean {
-    // CEL expressions are typically enclosed in ${...}
-    return value.startsWith("${") && value.endsWith("}");
-  }
-  /**
    * Validate resources section
    */
   private static validateResources(
@@ -413,29 +413,36 @@ export class SchemaValidator {
           )
         );
       } else {
-        // Check for duplicate IDs
-        if (resourceIds.has(resource.id)) {
-          const resourcePosition = this.findPositionOfField(
-            document,
-            `resources[${i}].id`
-          );
+        // Skip validation if ID is a CEL expression
+        if (!CELUtils.isCELExpression(resource.id)) {
+          // Check for duplicate IDs
+          if (resourceIds.has(resource.id)) {
+            const resourcePosition = this.findPositionOfField(
+              document,
+              `resources[${i}].id`
+            );
 
-          diagnostics.push(
-            DiagnosticUtils.createError(
-              `Duplicate resource ID '${resource.id}'. Resource IDs must be unique.`,
-              new vscode.Range(
-                resourcePosition,
-                resourcePosition.translate(0, resource.id.length)
-              ),
-              "kro-schema-validation"
-            )
-          );
+            diagnostics.push(
+              DiagnosticUtils.createError(
+                `Duplicate resource ID '${resource.id}'. Resource IDs must be unique.`,
+                new vscode.Range(
+                  resourcePosition,
+                  resourcePosition.translate(0, resource.id.length)
+                ),
+                "kro-schema-validation"
+              )
+            );
+          }
+          resourceIds.add(resource.id);
         }
-        resourceIds.add(resource.id);
       }
 
       // Validate resource type
-      if (!resource.type) {
+      if (
+        !resource.type ||
+        (typeof resource.type === "string" &&
+          !CELUtils.isCELExpression(resource.type))
+      ) {
         const resourcePosition = this.findPositionOfArrayItem(
           document,
           "resources",
@@ -454,7 +461,11 @@ export class SchemaValidator {
       }
 
       // Validate resource properties if present
-      if (resource.properties && typeof resource.properties !== "object") {
+      if (
+        resource.properties &&
+        !CELUtils.isCELExpression(resource.properties) &&
+        typeof resource.properties !== "object"
+      ) {
         const propertiesPosition = this.findPositionOfField(
           document,
           `resources[${i}].properties`

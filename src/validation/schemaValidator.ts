@@ -166,11 +166,6 @@ export class SchemaValidator {
     if (parsedYaml.spec?.schema) {
       this.validateSchema(document, parsedYaml.spec.schema, diagnostics);
     }
-
-    // Validate resources section
-    if (parsedYaml.spec?.resources) {
-      this.validateResources(document, parsedYaml.spec.resources, diagnostics);
-    }
   }
 
   /**
@@ -234,11 +229,6 @@ export class SchemaValidator {
     // Validate schema if present
     if (parsedYaml.spec.schema) {
       this.validateSchema(document, parsedYaml.spec.schema, diagnostics);
-    }
-
-    // Validate resources if present
-    if (parsedYaml.spec.resources) {
-      this.validateResources(document, parsedYaml.spec.resources, diagnostics);
     }
   }
 
@@ -363,123 +353,6 @@ export class SchemaValidator {
             );
           }
         }
-      }
-    }
-  }
-
-  /**
-   * Validate resources section
-   */
-  private static validateResources(
-    document: vscode.TextDocument,
-    resources: Resource[],
-    diagnostics: vscode.Diagnostic[]
-  ): void {
-    if (!Array.isArray(resources)) {
-      const resourcesPosition = this.findPositionAfterKey(
-        document,
-        "resources"
-      );
-
-      diagnostics.push(
-        DiagnosticUtils.createError(
-          "Invalid 'resources' section. Expected an array of resources.",
-          new vscode.Range(resourcesPosition, resourcesPosition),
-          "kro-schema-validation"
-        )
-      );
-      return;
-    }
-
-    // Track resource IDs to check for duplicates
-    const resourceIds = new Set<string>();
-
-    for (let i = 0; i < resources.length; i++) {
-      const resource = resources[i];
-
-      // Validate resource ID
-      if (!resource.id) {
-        const resourcePosition = this.findPositionOfArrayItem(
-          document,
-          "resources",
-          i
-        );
-
-        diagnostics.push(
-          DiagnosticUtils.createError(
-            `Missing 'id' in resource at index ${i}. Each resource must have an ID.`,
-            new vscode.Range(resourcePosition, resourcePosition),
-            "kro-schema-validation"
-          )
-        );
-      } else {
-        // Skip validation if ID is a CEL expression
-        if (!CELUtils.isCELExpression(resource.id)) {
-          // Check for duplicate IDs
-          if (resourceIds.has(resource.id)) {
-            const resourcePosition = this.findPositionOfField(
-              document,
-              `resources[${i}].id`
-            );
-
-            diagnostics.push(
-              DiagnosticUtils.createError(
-                `Duplicate resource ID '${resource.id}'. Resource IDs must be unique.`,
-                new vscode.Range(
-                  resourcePosition,
-                  resourcePosition.translate(0, resource.id.length)
-                ),
-                "kro-schema-validation"
-              )
-            );
-          }
-          resourceIds.add(resource.id);
-        }
-      }
-
-      // Validate resource type
-      if (
-        !resource.type ||
-        (typeof resource.type === "string" &&
-          !CELUtils.isCELExpression(resource.type))
-      ) {
-        const resourcePosition = this.findPositionOfArrayItem(
-          document,
-          "resources",
-          i
-        );
-
-        diagnostics.push(
-          DiagnosticUtils.createError(
-            `Missing 'type' in resource '${
-              resource.id || `at index ${i}`
-            }'. Each resource must have a type.`,
-            new vscode.Range(resourcePosition, resourcePosition),
-            "kro-schema-validation"
-          )
-        );
-      }
-
-      // Validate resource properties if present
-      if (
-        resource.properties &&
-        !CELUtils.isCELExpression(resource.properties) &&
-        typeof resource.properties !== "object"
-      ) {
-        const propertiesPosition = this.findPositionOfField(
-          document,
-          `resources[${i}].properties`
-        );
-
-        diagnostics.push(
-          DiagnosticUtils.createError(
-            `Invalid 'properties' in resource '${
-              resource.id || `at index ${i}`
-            }'. Properties must be an object.`,
-            new vscode.Range(propertiesPosition, propertiesPosition),
-            "kro-schema-validation"
-          )
-        );
       }
     }
   }

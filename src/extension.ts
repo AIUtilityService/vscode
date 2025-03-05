@@ -2,6 +2,7 @@
 import * as vscode from "vscode";
 import { SchemaValidator } from "./validation/schemaValidator";
 import { SchemaFixProvider } from "./actions/schemaFix";
+import { CELSyntaxProvider } from "./providers/celSyntax";
 
 // Debounce timer for validation
 let validationTimer: NodeJS.Timeout | undefined;
@@ -72,6 +73,15 @@ export function activate(context: vscode.ExtensionContext) {
         }, 500);
       }
     })
+  );
+
+  const celSyntaxProvider = new CELSyntaxProvider();
+  context.subscriptions.push(
+    vscode.languages.registerDocumentSemanticTokensProvider(
+      { language: "yaml" },
+      celSyntaxProvider,
+      celSyntaxProvider.getLegend()
+    )
   );
 
   // Validate all open documents

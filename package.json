@@ -21,6 +21,39 @@
         "title": "Validate Kro Schema"
       }
     ],
+    "semanticTokenTypes": [
+      {
+        "id": "celExpression",
+        "superType": "expression",
+        "description": "CEL expression"
+      }
+    ],
+    "semanticTokenModifiers": [
+      {
+        "id": "cel",
+        "description": "CEL specific modifier"
+      }
+    ],
+    "semanticTokenScopes": [
+      {
+        "scopes": {
+          "celExpression": [
+            "entity.name.function.cel"
+          ]
+        }
+      }
+    ],
+    "colors": [
+      {
+        "id": "celExpression.foreground",
+        "description": "Color for CEL expressions",
+        "defaults": {
+          "dark": "#569CD6",
+          "light": "#0000FF",
+          "highContrast": "#569CD6"
+        }
+      }
+    ],
     "menus": {
       "editor/context": [
         {

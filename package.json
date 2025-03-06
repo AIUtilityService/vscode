@@ -23,9 +23,19 @@
     ],
     "semanticTokenTypes": [
       {
-        "id": "celExpression",
-        "superType": "expression",
-        "description": "CEL expression"
+        "id": "celRoot",
+        "superType": "variable",
+        "description": "Root field of CEL expression"
+      },
+      {
+        "id": "celField",
+        "superType": "property",
+        "description": "Intermediate field of CEL expression"
+      },
+      {
+        "id": "celLeafField",
+        "superType": "property",
+        "description": "Leaf field of CEL expression"
       }
     ],
     "semanticTokenModifiers": [
@@ -45,12 +55,30 @@
     ],
     "colors": [
       {
-        "id": "celExpression.foreground",
-        "description": "Color for CEL expressions",
+        "id": "celRoot.foreground",
+        "description": "Color for root fields",
         "defaults": {
-          "dark": "#569CD6",
-          "light": "#0000FF",
-          "highContrast": "#569CD6"
+          "dark": "#4EC9B0",
+          "light": "#267f99",
+          "highContrast": "#4EC9B0"
+        }
+      },
+      {
+        "id": "celField.foreground",
+        "description": "Color for intermediate fields",
+        "defaults": {
+          "dark": "#9CDCFE",
+          "light": "#001080",
+          "highContrast": "#9CDCFE"
+        }
+      },
+      {
+        "id": "celLeafField.foreground",
+        "description": "Color for leaf fields",
+        "defaults": {
+          "dark": "#DCDCAA",
+          "light": "#795E26",
+          "highContrast": "#DCDCAA"
         }
       }
     ],

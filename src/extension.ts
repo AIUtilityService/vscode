@@ -2,6 +2,7 @@
 import * as vscode from "vscode";
 import { SchemaValidator } from "./validation/schemaValidator";
 import { SchemaFixProvider } from "./actions/schemaFix";
+import { CELDocumentLinkProvider } from "./provider/CELLinkProvider";
 import { CELSemanticTokenProvider } from "./provider/semanticProvider";
 
 // Debounce timer for validation
@@ -82,6 +83,16 @@ export function activate(context: vscode.ExtensionContext) {
       semanticTokensProvider.getLegend()
     )
   );
+
+  // Register document link provider
+  const documentLinkProvider = new CELDocumentLinkProvider();
+  context.subscriptions.push(
+    vscode.languages.registerDocumentLinkProvider(
+      { language: "yaml" },
+      documentLinkProvider
+    )
+  );
+
   // Validate all open documents
   vscode.workspace.textDocuments.forEach((document) => {
     if (document.languageId === "yaml") {

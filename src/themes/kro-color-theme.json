@@ -1,0 +1,19 @@
+{
+  "name": "Kro Theme",
+  "tokenColors": [
+    {
+      "scope": "variable.cel.conditions",
+      "settings": {
+        "foreground": "#569CD6",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "scope": "variable.cel.replicas",
+      "settings": {
+        "foreground": "#4EC9B0",
+        "fontStyle": "italic"
+      }
+    }
+  ]
+}

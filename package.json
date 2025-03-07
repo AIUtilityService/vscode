@@ -21,6 +21,81 @@
         "title": "Validate Kro Schema"
       }
     ],
+    "semanticTokenTypes": [
+      {
+        "id": "celDollar",
+        "superType": "operator",
+        "description": "CEL dollar sign"
+      },
+      {
+        "id": "celBrace",
+        "superType": "operator",
+        "description": "CEL curly braces"
+      },
+      {
+        "id": "celRoot",
+        "superType": "variable",
+        "description": "CEL root path segment"
+      },
+      {
+        "id": "celMiddle",
+        "superType": "variable",
+        "description": "CEL middle path segment"
+      },
+      {
+        "id": "celLeaf",
+        "superType": "variable",
+        "description": "CEL leaf path segment"
+      }
+    ],
+    "semanticTokenScopes": [
+      {
+        "language": "yaml",
+        "scopes": {
+          "celRoot": [
+            "variable.cel.root"
+          ],
+          "celMiddle": [
+            "variable.cel.middle"
+          ],
+          "celLeaf": [
+            "variable.cel.leaf"
+          ],
+          "celDollar": [
+            "keyword.operator.cel.dollar"
+          ],
+          "celBrace": [
+            "keyword.operator.cel.brace"
+          ]
+        }
+      }
+    ],
+    "colors": [
+      {
+        "id": "celRoot.foreground",
+        "description": "Color for CEL root path segment",
+        "defaults": {
+          "dark": "#569CD6",
+          "light": "#0000FF"
+        }
+      },
+      {
+        "id": "celMiddle.foreground",
+        "description": "Color for CEL middle path segment",
+        "defaults": {
+          "dark": "#4EC9B0",
+          "light": "#267F99"
+        }
+      },
+      {
+        "id": "celLeaf.foreground",
+        "description": "Color for CEL leaf path segment",
+        "defaults": {
+          "dark": "#9CDCFE",
+          "light": "#001080"
+        }
+      }
+    ],
     "menus": {
       "editor/context": [
         {

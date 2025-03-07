@@ -2,6 +2,7 @@
 import * as vscode from "vscode";
 import { SchemaValidator } from "./validation/schemaValidator";
 import { SchemaFixProvider } from "./actions/schemaFix";
+import { CELSemanticTokenProvider } from "./provider/semanticProvider";
 
 // Debounce timer for validation
 let validationTimer: NodeJS.Timeout | undefined;
@@ -73,7 +74,14 @@ export function activate(context: vscode.ExtensionContext) {
       }
     })
   );
-
+  const semanticTokensProvider = new CELSemanticTokenProvider();
+  context.subscriptions.push(
+    vscode.languages.registerDocumentSemanticTokensProvider(
+      { language: "yaml" },
+      semanticTokensProvider,
+      semanticTokensProvider.getLegend()
+    )
+  );
   // Validate all open documents
   vscode.workspace.textDocuments.forEach((document) => {
     if (document.languageId === "yaml") {

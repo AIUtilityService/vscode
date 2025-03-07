@@ -29,7 +29,7 @@
       },
       {
         "id": "celField",
-        "superType": "property",
+        "superType": "property_readonly",
         "description": "Intermediate field of CEL expression"
       },
       {
@@ -47,8 +47,14 @@
     "semanticTokenScopes": [
       {
         "scopes": {
-          "celExpression": [
-            "entity.name.function.cel"
+          "celRoot": [
+            "variable.other.cel"
+          ],
+          "celField": [
+            "variable.property.cel"
+          ],
+          "celLeafField": [
+            "variable.parameter.cel"
           ]
         }
       }
@@ -58,27 +64,27 @@
         "id": "celRoot.foreground",
         "description": "Color for root fields",
         "defaults": {
-          "dark": "#4EC9B0",
-          "light": "#267f99",
-          "highContrast": "#4EC9B0"
+          "dark": "#e31616",
+          "light": "#e31616",
+          "highContrast": "#e31616"
         }
       },
       {
         "id": "celField.foreground",
         "description": "Color for intermediate fields",
         "defaults": {
-          "dark": "#9CDCFE",
-          "light": "#001080",
-          "highContrast": "#9CDCFE"
+          "dark": "#e31616",
+          "light": "#e31616",
+          "highContrast": "#e31616"
         }
       },
       {
         "id": "celLeafField.foreground",
         "description": "Color for leaf fields",
         "defaults": {
-          "dark": "#DCDCAA",
-          "light": "#795E26",
-          "highContrast": "#DCDCAA"
+          "dark": "#e31616",
+          "light": "#e31616",
+          "highContrast": "#e31616"
         }
       }
     ],
